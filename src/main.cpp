@@ -1,13 +1,19 @@
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <math.h>
+#include <vector>
 
 struct Point {
 	GLint x;
 	GLint y;
 };
 
-Point p1, p2;
+struct Tool {
+	int id = 1;
+	std::vector<Point> points;
+};
+
+Tool myTool;
 
 void drawLine(Point p1, Point p2) {
 	auto lineLow = [](int x0, int y0, int x1, int y1) 
@@ -75,6 +81,12 @@ void drawLine(Point p1, Point p2) {
 	}
 }
 
+void drawCircle() {
+}
+
+void drawEllipse() {
+}
+
 void init() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -85,12 +97,29 @@ void init() {
 }
 
 void mouse(int button, int event, int x, int y) {
-	if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN)
-		p1 = {.x = x, .y = 500 - y};
-	else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
-		p2 = {.x = x, .y = 500 - y};
-		drawLine(p1, p2);
+	if (myTool.id == 1) {
+		if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN)
+			p1 = {.x = x, .y = 500 - y};
+		else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+			p2 = {.x = x, .y = 500 - y};
+			drawLine(p1, p2);
+		}
 	}
+}
+
+void mainMenuHandler(int choice) {
+	switch (choice) {
+		case 1: // Line
+		case 2: // Circle
+		case 3: // Ellipse
+			myTool.id = choice;
+			break;
+		case 4: // Exit
+			exit(0);
+			break;
+	}
+	glClear(GL_COLOR_BUFFER_BIT);
+	glFlush();
 }
 
 void display(void) {}
@@ -102,6 +131,13 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition(200, 200);
 	glutCreateWindow("Drawing");
 	init();
+
+	glutCreateMenu(mainMenuHandler);
+	glutAddMenuEntry("Line", 1);
+	glutAddMenuEntry("Circle", 2);
+	glutAddMenuEntry("Ellipse", 3);
+	glutAddMenuEntry("Exit", 4);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	glutDisplayFunc(display);
 	glutMouseFunc(mouse);
