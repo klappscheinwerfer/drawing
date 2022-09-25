@@ -97,13 +97,21 @@ void init() {
 }
 
 void mouse(int button, int event, int x, int y) {
-	if (myTool.id == 1) {
-		if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN)
-			p1 = {.x = x, .y = 500 - y};
-		else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
-			p2 = {.x = x, .y = 500 - y};
-			drawLine(p1, p2);
-		}
+	switch (myTool.id) {
+		case 1:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({.x = x, .y = 500 - y});
+				drawLine(myTool.points[0], myTool.points[1]);
+			}
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
 	}
 }
 
@@ -118,6 +126,7 @@ void mainMenuHandler(int choice) {
 			exit(0);
 			break;
 	}
+	myTool.points.clear();
 	glClear(GL_COLOR_BUFFER_BIT);
 	glFlush();
 }
