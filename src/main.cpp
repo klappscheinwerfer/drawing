@@ -15,6 +15,10 @@ struct Tool {
 
 Tool myTool;
 
+int getDistance(Point p1, Point p2) {
+	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2) * 1.0);
+}
+
 void drawLine(Point p1, Point p2) {
 	auto lineLow = [](int x0, int y0, int x1, int y1) 
 	{ 
@@ -81,7 +85,35 @@ void drawLine(Point p1, Point p2) {
 	}
 }
 
-void drawCircle() {
+void drawCircle(Point p1, Point p2) {
+	int x = 0;
+	int y = getDistance(p1, p2);
+	int p = 1 - y;
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1, 1, 1);
+	glBegin(GL_POINTS);
+	while (x < y) {
+		if (p < 0) {
+			x++;
+			p += 2 * x + 1;
+		} else {
+			x++;
+			y--;
+			p += 2 * x - 2 * y + 1;
+		}
+
+		glVertex2i(p1.x + x, p1.y + y);
+		glVertex2i(p1.x - x, p1.y + y);
+		glVertex2i(p1.x + x, p1.y - y);
+		glVertex2i(p1.x - x, p1.y - y);
+		glVertex2i(p1.x + y, p1.y + x);
+		glVertex2i(p1.x - y, p1.y + x);
+		glVertex2i(p1.x + y, p1.y - x);
+		glVertex2i(p1.x - y, p1.y - x);
+	}
+	glEnd();
+	glFlush();
 }
 
 void drawEllipse() {
@@ -109,6 +141,14 @@ void mouse(int button, int event, int x, int y) {
 			}
 			break;
 		case 2:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({.x = x, .y = 500 - y});
+				drawCircle(myTool.points[0], myTool.points[1]);
+			}
 			break;
 		case 3:
 			break;
