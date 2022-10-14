@@ -116,7 +116,63 @@ void drawCircle(Point p1, Point p2) {
 	glFlush();
 }
 
-void drawEllipse() {
+void drawEllipse(Point c, Point r) {
+	float dx, dy, d1, d2, x, y;
+	x = 0;
+	y = r.y;
+ 
+	d1 = (r.y * r.y) - (r.x * r.x * r.y) + (0.25 * r.x * r.x);
+	dx = 2 * r.y * r.y * x;
+	dy = 2 * r.x * r.x * y;
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1, 1, 1);
+	glBegin(GL_POINTS);
+ 
+	while (dx < dy) {
+		glVertex2i(c.x + x, c.y + y);
+		glVertex2i(c.x - x, c.y + y);
+		glVertex2i(c.x + x, c.y - y);
+		glVertex2i(c.x - x, c.y - y);
+ 
+		if (d1 < 0) {
+			x++;
+			dx = dx + (2 * r.y * r.y);
+			d1 = d1 + dx + (r.y * r.y);
+		} else {
+			x++;
+			y--;
+			dx = dx + (2 * r.y * r.y);
+			dy = dy - (2 * r.x * r.x);
+			d1 = d1 + dx - dy + (r.y * r.y);
+		}
+	}
+ 
+	d2 = ((r.y * r.y) * ((x + 0.5) * (x + 0.5)))
+		+ ((r.x * r.x) * ((y - 1) * (y - 1)))
+		- (r.x * r.x * r.y * r.y);
+ 
+	while (y >= 0) {
+		glVertex2i(c.x + x, c.y + y);
+		glVertex2i(c.x - x, c.y + y);
+		glVertex2i(c.x + x, c.y - y);
+		glVertex2i(c.x - x, c.y - y);
+ 
+		if (d2 > 0) {
+			y--;
+			dy = dy - (2 * r.x * r.x);
+			d2 = d2 + (r.x * r.x) - dy;
+		} else {
+			y--;
+			x++;
+			dx = dx + (2 * r.y * r.y);
+			dy = dy - (2 * r.x * r.x);
+			d2 = d2 + dx - dy + (r.x * r.x);
+		}
+	}
+
+	glEnd();
+	glFlush();
 }
 
 void init() {
@@ -151,7 +207,19 @@ void mouse(int button, int event, int x, int y) {
 			}
 			break;
 		case 3:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({
+					.x = std::abs(x - myTool.points[0].x),
+					.y = std::abs(500 - y - myTool.points[0].y)});
+				drawEllipse(myTool.points[0], myTool.points[1]);
+			}
 			break;
+		default:
+			return;
 	}
 }
 
