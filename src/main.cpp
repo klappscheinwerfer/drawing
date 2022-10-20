@@ -15,8 +15,101 @@ struct Tool {
 
 Tool myTool;
 
-int getDistance(Point p1, Point p2) {
-	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2) * 1.0);
+// Display
+void initWindow();
+void display(void);
+void createMenu();
+
+// Controllers
+void mouse(int, int, int, int);
+
+// Draw
+void drawLine(Point, Point);
+void drawCircle(Point, Point);
+void drawEllipse(Point, Point);
+
+// Menu
+void mainMenu(int);
+
+// Misc
+int getDistance(Point, Point);
+
+int main(int argc, char** argv) {
+	glutInit(&argc, argv);
+	initWindow();
+
+	createMenu();
+
+	glutDisplayFunc(display);
+	glutMouseFunc(mouse);
+
+	glutMainLoop();
+
+	return 0;
+}
+
+void initWindow() {
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(200, 200);
+	glutCreateWindow("Drawing");
+
+	glMatrixMode(GL_PROJECTION);
+	gluOrtho2D(0, 500, 0, 500);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glFlush();
+}
+
+void display(void) {
+	glFlush();
+}
+
+void createMenu() {
+	glutCreateMenu(mainMenu);
+	glutAddMenuEntry("Line", 1);
+	glutAddMenuEntry("Circle", 2);
+	glutAddMenuEntry("Ellipse", 3);
+	glutAddMenuEntry("Exit", 4);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
+void mouse(int button, int event, int x, int y) {
+	switch (myTool.id) {
+		case 1:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({.x = x, .y = 500 - y});
+				drawLine(myTool.points[0], myTool.points[1]);
+			}
+			break;
+		case 2:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({.x = x, .y = 500 - y});
+				drawCircle(myTool.points[0], myTool.points[1]);
+			}
+			break;
+		case 3:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
+				myTool.points.clear();
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			}
+			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
+				myTool.points.push_back({
+					.x = std::abs(x - myTool.points[0].x),
+					.y = std::abs(500 - y - myTool.points[0].y)});
+				drawEllipse(myTool.points[0], myTool.points[1]);
+			}
+			break;
+	}
+
+	glFlush();
 }
 
 void drawLine(Point p1, Point p2) {
@@ -32,7 +125,6 @@ void drawLine(Point p1, Point p2) {
 		GLfloat D = 2 * dy - dx;
 		GLfloat y = y0;
 
-		glClear(GL_COLOR_BUFFER_BIT);
 		glColor3f(1, 1, 1);
 		glBegin(GL_POINTS);
 		for (int x = x0; x < x1; x++) {
@@ -45,7 +137,6 @@ void drawLine(Point p1, Point p2) {
 				D += 2 * dy;
 		}
 		glEnd();
-		glFlush();
 	};
 
 	auto lineHigh = [](int x0, int y0, int x1, int y1) { 
@@ -59,7 +150,6 @@ void drawLine(Point p1, Point p2) {
 		GLfloat D = 2 * dy - dx;
 		GLfloat x = x0;
 
-		glClear(GL_COLOR_BUFFER_BIT);
 		glColor3f(1, 1, 1);
 		glBegin(GL_POINTS);
 		for (int y = y0; y < y1; y++) {
@@ -72,7 +162,6 @@ void drawLine(Point p1, Point p2) {
 				D += 2 * dx;
 		}
 		glEnd();
-		glFlush();
 	};
 
 	if (abs(p2.y - p1.y) < abs(p2.x - p1.x)) {
@@ -90,7 +179,6 @@ void drawCircle(Point p1, Point p2) {
 	int y = getDistance(p1, p2);
 	int p = 1 - y;
 
-	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1, 1, 1);
 	glBegin(GL_POINTS);
 	while (x < y) {
@@ -113,7 +201,6 @@ void drawCircle(Point p1, Point p2) {
 		glVertex2i(p1.x - y, p1.y - x);
 	}
 	glEnd();
-	glFlush();
 }
 
 void drawEllipse(Point c, Point r) {
@@ -125,7 +212,6 @@ void drawEllipse(Point c, Point r) {
 	dx = 2 * r.y * r.y * x;
 	dy = 2 * r.x * r.x * y;
 
-	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1, 1, 1);
 	glBegin(GL_POINTS);
  
@@ -172,58 +258,9 @@ void drawEllipse(Point c, Point r) {
 	}
 
 	glEnd();
-	glFlush();
 }
 
-void init() {
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0, 500, 0, 500);
-	glFlush();
-}
-
-void mouse(int button, int event, int x, int y) {
-	switch (myTool.id) {
-		case 1:
-			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
-				myTool.points.clear();
-				myTool.points.push_back({.x = x, .y = 500 - y});
-			}
-			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
-				myTool.points.push_back({.x = x, .y = 500 - y});
-				drawLine(myTool.points[0], myTool.points[1]);
-			}
-			break;
-		case 2:
-			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
-				myTool.points.clear();
-				myTool.points.push_back({.x = x, .y = 500 - y});
-			}
-			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
-				myTool.points.push_back({.x = x, .y = 500 - y});
-				drawCircle(myTool.points[0], myTool.points[1]);
-			}
-			break;
-		case 3:
-			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
-				myTool.points.clear();
-				myTool.points.push_back({.x = x, .y = 500 - y});
-			}
-			else if (button == GLUT_LEFT_BUTTON && event == GLUT_UP) {
-				myTool.points.push_back({
-					.x = std::abs(x - myTool.points[0].x),
-					.y = std::abs(500 - y - myTool.points[0].y)});
-				drawEllipse(myTool.points[0], myTool.points[1]);
-			}
-			break;
-		default:
-			return;
-	}
-}
-
-void mainMenuHandler(int choice) {
+void mainMenu(int choice) {
 	switch (choice) {
 		case 1: // Line
 		case 2: // Circle
@@ -235,31 +272,8 @@ void mainMenuHandler(int choice) {
 			break;
 	}
 	myTool.points.clear();
-	glClear(GL_COLOR_BUFFER_BIT);
-	glFlush();
 }
 
-void display(void) {}
-
-int main(int argc, char** argv) {
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-	glutInitWindowSize(500, 500);
-	glutInitWindowPosition(200, 200);
-	glutCreateWindow("Drawing");
-	init();
-
-	glutCreateMenu(mainMenuHandler);
-	glutAddMenuEntry("Line", 1);
-	glutAddMenuEntry("Circle", 2);
-	glutAddMenuEntry("Ellipse", 3);
-	glutAddMenuEntry("Exit", 4);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-
-	glutDisplayFunc(display);
-	glutMouseFunc(mouse);
-
-	glutMainLoop();
-
-	return 0;
+int getDistance(Point p1, Point p2) {
+	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2) * 1.0);
 }

@@ -6,3 +6,5 @@
 	* `cd build`
 	* `cmake ..`
 	* `make`
+* Run
+	* `bin/Drawing`
