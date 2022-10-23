@@ -1,16 +1,21 @@
 #include <GL/glut.h>
-#include <GL/glu.h>
+//#include <GL/glu.h>
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 struct Point {
-	GLint x;
-	GLint y;
+	GLint x, y;
+};
+
+struct Color {
+	GLubyte r, g, b;
 };
 
 struct Tool {
 	int id = 1;
 	std::vector<Point> points;
+	Color color = {0, 0, 0};
 };
 
 Tool myTool;
@@ -25,11 +30,14 @@ void mouse(int, int, int, int);
 
 // Draw
 void drawLine(Point, Point);
+void drawCurve(std::vector<Point>);
 void drawCircle(Point, Point);
 void drawEllipse(Point, Point);
 
 // Menu
 void mainMenu(int);
+void toolMenu(int);
+void colorMenu(int);
 
 // Misc
 int getDistance(Point, Point);
@@ -55,9 +63,11 @@ void initWindow() {
 
 	glMatrixMode(GL_PROJECTION);
 	gluOrtho2D(0, 500, 0, 500);
-	glClearColor(0, 0, 0, 0);
+	glClearColor(1, 1, 1, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glFlush();
+
+	glColor3ub(myTool.color.r, myTool.color.g, myTool.color.b);
 }
 
 void display(void) {
@@ -65,17 +75,32 @@ void display(void) {
 }
 
 void createMenu() {
+	// Tool submenu
+	int toolSubmenu = glutCreateMenu(toolMenu);
+	glutAddMenuEntry("Line", 2);
+	glutAddMenuEntry("Curve", 3);
+	glutAddMenuEntry("Circle", 4);
+	glutAddMenuEntry("Ellipse", 5);
+
+	// Color submenu
+	int colorSubmenu = glutCreateMenu(colorMenu);
+	glutAddMenuEntry("Black", 1);
+	glutAddMenuEntry("Red", 2);
+	glutAddMenuEntry("Green", 3);
+	glutAddMenuEntry("Blue", 4);
+	glutAddMenuEntry("White", 5);
+
+	// Main menu
 	glutCreateMenu(mainMenu);
-	glutAddMenuEntry("Line", 1);
-	glutAddMenuEntry("Circle", 2);
-	glutAddMenuEntry("Ellipse", 3);
-	glutAddMenuEntry("Exit", 4);
+	glutAddSubMenu("Tools", toolSubmenu);
+	glutAddSubMenu("Colors", colorSubmenu);
+	glutAddMenuEntry("Exit", 1);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 void mouse(int button, int event, int x, int y) {
 	switch (myTool.id) {
-		case 1:
+		case 2:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -85,7 +110,13 @@ void mouse(int button, int event, int x, int y) {
 				drawLine(myTool.points[0], myTool.points[1]);
 			}
 			break;
-		case 2:
+		case 3:
+			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN && myTool.points.size() <= 12)
+				myTool.points.push_back({.x = x, .y = 500 - y});
+			else if (button == GLUT_RIGHT_BUTTON && event == GLUT_DOWN && myTool.points.size() >= 3)
+				drawCurve(myTool.points);
+			break;
+		case 4:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -95,7 +126,7 @@ void mouse(int button, int event, int x, int y) {
 				drawCircle(myTool.points[0], myTool.points[1]);
 			}
 			break;
-		case 3:
+		case 5:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -125,8 +156,8 @@ void drawLine(Point p1, Point p2) {
 		GLfloat D = 2 * dy - dx;
 		GLfloat y = y0;
 
-		glColor3f(1, 1, 1);
 		glBegin(GL_POINTS);
+
 		for (int x = x0; x < x1; x++) {
 			glVertex2i(x, y);
 			if (D > 0) {
@@ -136,6 +167,7 @@ void drawLine(Point p1, Point p2) {
 			else
 				D += 2 * dy;
 		}
+		
 		glEnd();
 	};
 
@@ -150,8 +182,8 @@ void drawLine(Point p1, Point p2) {
 		GLfloat D = 2 * dy - dx;
 		GLfloat x = x0;
 
-		glColor3f(1, 1, 1);
 		glBegin(GL_POINTS);
+
 		for (int y = y0; y < y1; y++) {
 			glVertex2i(x, y);
 			if (D > 0) {
@@ -161,6 +193,7 @@ void drawLine(Point p1, Point p2) {
 			else
 				D += 2 * dx;
 		}
+
 		glEnd();
 	};
 
@@ -174,13 +207,16 @@ void drawLine(Point p1, Point p2) {
 	}
 }
 
+void drawCurve(std::vector<Point> p) {
+}
+
 void drawCircle(Point p1, Point p2) {
 	int x = 0;
 	int y = getDistance(p1, p2);
 	int p = 1 - y;
 
-	glColor3f(1, 1, 1);
 	glBegin(GL_POINTS);
+
 	while (x < y) {
 		if (p < 0) {
 			x++;
@@ -200,6 +236,7 @@ void drawCircle(Point p1, Point p2) {
 		glVertex2i(p1.x + y, p1.y - x);
 		glVertex2i(p1.x - y, p1.y - x);
 	}
+
 	glEnd();
 }
 
@@ -212,9 +249,8 @@ void drawEllipse(Point c, Point r) {
 	dx = 2 * r.y * r.y * x;
 	dy = 2 * r.x * r.x * y;
 
-	glColor3f(1, 1, 1);
-	glBegin(GL_POINTS);
- 
+	glBegin(GL_POINTS); 
+
 	while (dx < dy) {
 		glVertex2i(c.x + x, c.y + y);
 		glVertex2i(c.x - x, c.y + y);
@@ -262,16 +298,30 @@ void drawEllipse(Point c, Point r) {
 
 void mainMenu(int choice) {
 	switch (choice) {
-		case 1: // Line
-		case 2: // Circle
-		case 3: // Ellipse
-			myTool.id = choice;
-			break;
-		case 4: // Exit
+		case 1: // Exit
 			exit(0);
 			break;
 	}
+}
+
+void toolMenu(int choice) {
+	switch (choice) {
+		case 2 ... 5:
+			myTool.id = choice;
+			break;
+	}
 	myTool.points.clear();
+}
+
+void colorMenu(int choice) {
+	switch (choice) {
+		case 1: myTool.color = Color{0, 0, 0}; break;
+		case 2: myTool.color = Color{255, 0, 0}; break;
+		case 3: myTool.color = Color{0, 255, 0}; break;
+		case 4: myTool.color = Color{0, 0, 255}; break;
+		case 5: myTool.color = Color{255, 255, 255}; break;
+	}
+	glColor3ub(myTool.color.r, myTool.color.g, myTool.color.b);
 }
 
 int getDistance(Point p1, Point p2) {
