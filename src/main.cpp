@@ -41,6 +41,8 @@ void colorMenu(int);
 
 // Misc
 int getDistance(Point, Point);
+int factorial(int n);
+float bernstein(int i, int n, float t); // Calculates Bernstein polynomial
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -95,7 +97,7 @@ void createMenu() {
 	glutAddSubMenu("Tools", toolSubmenu);
 	glutAddSubMenu("Colors", colorSubmenu);
 	glutAddMenuEntry("Exit", 1);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutAttachMenu(GLUT_MIDDLE_BUTTON);
 }
 
 void mouse(int button, int event, int x, int y) {
@@ -113,8 +115,10 @@ void mouse(int button, int event, int x, int y) {
 		case 3:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN && myTool.points.size() <= 12)
 				myTool.points.push_back({.x = x, .y = 500 - y});
-			else if (button == GLUT_RIGHT_BUTTON && event == GLUT_DOWN && myTool.points.size() >= 3)
+			else if ((button == GLUT_RIGHT_BUTTON && event == GLUT_DOWN && myTool.points.size() >= 3) || myTool.points.size() == 12) {
 				drawCurve(myTool.points);
+				myTool.points.clear();
+			}
 			break;
 		case 4:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
@@ -167,7 +171,7 @@ void drawLine(Point p1, Point p2) {
 			else
 				D += 2 * dy;
 		}
-		
+
 		glEnd();
 	};
 
@@ -207,7 +211,28 @@ void drawLine(Point p1, Point p2) {
 	}
 }
 
-void drawCurve(std::vector<Point> p) {
+// TODO
+void drawCurve(std::vector<Point> points) {
+	// Debug
+	for (int i = 1; i < points.size(); i++) {
+		drawLine(points[i-1], points[i]);
+	}
+
+	int ps = points.size() - 1;
+
+	glBegin(GL_POINTS);
+
+	for (float t = 0; t <= 1; t += 0.1) {
+		float x = 0, y = 0;
+		for (int i = 0; i < ps; i++) {
+			x += x * bernstein(i, ps, t);
+			y += y * bernstein(i, ps, t);
+		}
+		std::cout << x << " " << y << std::endl;
+		glVertex2i((int)x, (int)y);
+	}
+
+	glEnd();
 }
 
 void drawCircle(Point p1, Point p2) {
@@ -326,4 +351,21 @@ void colorMenu(int choice) {
 
 int getDistance(Point p1, Point p2) {
 	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2) * 1.0);
+}
+
+int factorial(int n) {
+	int r = 1;
+	while (n) {
+		r *= n;
+		n--;
+	}
+	return r;
+}
+
+float bernstein(int i, int n, float t) {
+	float r = (float)factorial(n) / (float)(factorial(i) * factorial(n - i));
+	r *= pow(t, i);
+	r *= pow(1 - t, n - i);
+	std::cout << r << std::endl;
+	return r;
 }
