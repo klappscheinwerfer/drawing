@@ -1,21 +1,20 @@
 #include <GL/glut.h>
-//#include <GL/glu.h>
 #include <math.h>
 #include <vector>
 #include <iostream>
 
 struct Point {
-	GLint x, y;
+	int x, y;
 };
 
 struct Color {
-	GLubyte r, g, b;
+	unsigned char r, g, b;
 };
 
 struct Tool {
 	int id = 1;
 	std::vector<Point> points;
-	Color color = {0, 0, 0};
+	Color color {0, 0, 0};
 };
 
 Tool myTool;
@@ -41,8 +40,8 @@ void colorMenu(int);
 
 // Misc
 int getDistance(Point, Point);
-int factorial(int n);
-float bernstein(int i, int n, float t); // Calculates Bernstein polynomial
+int fac(int n); // Factorial
+float bernstein(int i, int n, float t); // Bernstein polynomial
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -66,7 +65,7 @@ void initWindow() {
 	glMatrixMode(GL_PROJECTION);
 	gluOrtho2D(0, 500, 0, 500);
 	glClearColor(1, 1, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFlush();
 
 	glColor3ub(myTool.color.r, myTool.color.g, myTool.color.b);
@@ -148,17 +147,16 @@ void mouse(int button, int event, int x, int y) {
 }
 
 void drawLine(Point p1, Point p2) {
-	auto lineLow = [](int x0, int y0, int x1, int y1) 
-	{ 
-		GLfloat dx = x1 - x0;
-		GLfloat dy = y1 - y0;
-		GLfloat yi = 1;
+	auto lineLow = [](int x0, int y0, int x1, int y1) { 
+		float dx = x1 - x0;
+		float dy = y1 - y0;
+		float yi = 1;
 		if (dy < 0) {
 			yi = -1;
 			dy = -dy;
 		}
-		GLfloat D = 2 * dy - dx;
-		GLfloat y = y0;
+		float D = 2 * dy - dx;
+		float y = y0;
 
 		glBegin(GL_POINTS);
 
@@ -176,15 +174,15 @@ void drawLine(Point p1, Point p2) {
 	};
 
 	auto lineHigh = [](int x0, int y0, int x1, int y1) { 
-		GLfloat dx = x1 - x0;
-		GLfloat dy = y1 - y0;
-		GLfloat xi = 1;
+		float dx = x1 - x0;
+		float dy = y1 - y0;
+		float xi = 1;
 		if (dx < 0) {
 			xi = -1;
 			dx = -dx;
 		}
-		GLfloat D = 2 * dy - dx;
-		GLfloat x = x0;
+		float D = 2 * dy - dx;
+		float x = x0;
 
 		glBegin(GL_POINTS);
 
@@ -211,24 +209,23 @@ void drawLine(Point p1, Point p2) {
 	}
 }
 
-// TODO
 void drawCurve(std::vector<Point> points) {
-	// Debug
-	for (int i = 1; i < points.size(); i++) {
-		drawLine(points[i-1], points[i]);
-	}
+	float distance = 0;
+	for (int i = 1; i < points.size(); i++)
+		distance += getDistance(points[i-1], points[i]);
 
-	int ps = points.size() - 1;
+	int n = points.size() - 1;
+	float step = 1 / distance;
 
 	glBegin(GL_POINTS);
 
-	for (float t = 0; t <= 1; t += 0.1) {
+	for (float t = 0; t < 1; t += step) {
 		float x = 0, y = 0;
-		for (int i = 0; i < ps; i++) {
-			x += x * bernstein(i, ps, t);
-			y += y * bernstein(i, ps, t);
+		for (int i = 0; i <= n; i++) {
+			float b = bernstein(i, n, t);
+			x += points[i].x * b;
+			y += points[i].y * b;
 		}
-		std::cout << x << " " << y << std::endl;
 		glVertex2i((int)x, (int)y);
 	}
 
@@ -353,7 +350,8 @@ int getDistance(Point p1, Point p2) {
 	return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2) * 1.0);
 }
 
-int factorial(int n) {
+// Factorial
+int fac(int n) {
 	int r = 1;
 	while (n) {
 		r *= n;
@@ -363,9 +361,8 @@ int factorial(int n) {
 }
 
 float bernstein(int i, int n, float t) {
-	float r = (float)factorial(n) / (float)(factorial(i) * factorial(n - i));
+	float r = (float)fac(n) / (fac(i) * fac(n - i));
 	r *= pow(t, i);
 	r *= pow(1 - t, n - i);
-	std::cout << r << std::endl;
 	return r;
 }
