@@ -11,8 +11,15 @@ struct Color {
 	unsigned char r, g, b;
 };
 
+enum tools: unsigned char {
+	Line = 2,
+	Curve = 3,
+	Circle = 4,
+	Ellipse = 5
+};
+
 struct Tool {
-	int id = 1;
+	tools id = Line;
 	std::vector<Point> points;
 	Color color {0, 0, 0};
 };
@@ -23,6 +30,7 @@ Tool myTool;
 void initWindow();
 void display(void);
 void createMenu();
+void idle();
 
 // Controllers
 void mouse(int, int, int, int);
@@ -51,6 +59,7 @@ int main(int argc, char** argv) {
 
 	glutDisplayFunc(display);
 	glutMouseFunc(mouse);
+	glutIdleFunc(idle);
 
 	glutMainLoop();
 
@@ -99,9 +108,14 @@ void createMenu() {
 	glutAttachMenu(GLUT_MIDDLE_BUTTON);
 }
 
+void idle() {
+	glutPostRedisplay();
+}
+
 void mouse(int button, int event, int x, int y) {
+	glutPostRedisplay();
 	switch (myTool.id) {
-		case 2:
+		case Line:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -111,7 +125,7 @@ void mouse(int button, int event, int x, int y) {
 				drawLine(myTool.points[0], myTool.points[1]);
 			}
 			break;
-		case 3:
+		case Curve:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN && myTool.points.size() <= 12)
 				myTool.points.push_back({.x = x, .y = 500 - y});
 			else if ((button == GLUT_RIGHT_BUTTON && event == GLUT_DOWN && myTool.points.size() >= 3) || myTool.points.size() == 12) {
@@ -119,7 +133,7 @@ void mouse(int button, int event, int x, int y) {
 				myTool.points.clear();
 			}
 			break;
-		case 4:
+		case Circle:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -129,7 +143,7 @@ void mouse(int button, int event, int x, int y) {
 				drawCircle(myTool.points[0], myTool.points[1]);
 			}
 			break;
-		case 5:
+		case Ellipse:
 			if (button == GLUT_LEFT_BUTTON && event == GLUT_DOWN) {
 				myTool.points.clear();
 				myTool.points.push_back({.x = x, .y = 500 - y});
@@ -329,7 +343,7 @@ void mainMenu(int choice) {
 void toolMenu(int choice) {
 	switch (choice) {
 		case 2 ... 5:
-			myTool.id = choice;
+			myTool.id = (tools) choice;
 			break;
 	}
 	myTool.points.clear();
